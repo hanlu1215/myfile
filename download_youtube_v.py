@@ -5,6 +5,7 @@ import time
 import subprocess
 import requests
 import pathlib
+import json
 file_path = ".//data.a//"
 file_path = "I://gdg//"
 print("1:"+file_path)
@@ -34,7 +35,7 @@ print("file_path: "+file_path)
 url_paths = []
 p1 = input("input url:")
 url_paths.append(p1)
-flag_media = input("input file format: [mp3 flac video(v) m3u8(38) concat_ts(c)] :")
+flag_media = input("input file format: [mp3 flac video(v) m3u8(38) concat_ts(c) cctv] :")
 if input("flag_replace_name(1)  : ")=="1":
     flag_replace_name = True
     print("flag_replace_name:True")
@@ -109,19 +110,22 @@ def download_m3u8_2(url,file_path):
     os.chdir(file_path)
     file_path = os.getcwd()+"//"
     temp_dir = "temp"+ti
-    mkdir(temp_dir)
-    pathlib.Path(temp_dir+"//.ignore").touch()
     output_name = os.getcwd()+"//" + ti +".mp4"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299"
     }
     # 获取m3u8文件内容
     m3u8 = requests.get(url, headers=headers).text
+    print("-------------m3u8---------------")
     # print(m3u8)
+    print("----------------------------")
     # 获取ts文件列表
     # ts_list = [url.rsplit("/", 1)[0] + "/" + i for i in m3u8.split("\n") if i.endswith(".ts")]
     ts_list = [url.rsplit("/", 1)[0] + "/" + i for i in m3u8.split("\n") if ".ts" in i]
     # 下载ts文件
+    print("------------开始下载：----------------")
+    mkdir(temp_dir)
+    pathlib.Path(temp_dir+"//.ignore").touch()
     txt_path = temp_dir+"\\list.txt"
     f_txt = open(txt_path,"a")
     kk=0
@@ -193,6 +197,74 @@ def concat_ts(url_path,file_path):
             for f in os.listdir(temp_dir):
                 os.remove(os.path.join(temp_dir, f))
             os.removedirs(temp_dir)
+
+def download_cctv_v(url_main,file_path):
+    # url:getHttpVideoInfo
+    ti = str(time.time())
+    os.chdir(file_path)
+    file_path = os.getcwd()+"//"
+    temp_dir = "temp"+ti    
+    output_name = os.getcwd()+"//" + input("save name:") +".mp4"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299"
+    }
+    # 获取url文件内容
+    url_txt = requests.get(url_main, headers=headers).text
+    print("-------------url_json[video]key:---------------")
+    url_json = json.loads(url_txt)
+    for key in url_json["video"]:
+        print(key)
+    chaptersn = "chapters"+input("which chapters[]:")
+    chaptersn_jsons = url_json["video"][chaptersn]
+    while chaptersn_jsons == []:
+        chaptersn = "chapters"+input("which chapters[]:")
+        chaptersn_jsons = url_json["video"][chaptersn]
+    urls = []
+    for chaptersn_json in chaptersn_jsons:
+        urls.append(chaptersn_json["url"])
+    print("------------开始下载：----------------")
+    mkdir(temp_dir)
+    pathlib.Path(temp_dir+"//.ignore").touch()
+    txt_path = temp_dir+"\\list.txt"
+    f_txt = open(txt_path,"a")
+    kk=0
+    for mp4_url in urls:
+        kk = kk +1
+        mp4_name = str(kk).zfill(4)+".mp4"
+        print("----------------------------")
+        print(mp4_url)
+        print("----------------------------")
+        ki = 0
+        while(ki<10):
+            ki = ki +1
+            sub1 = subprocess.run(["wget", "-O", temp_dir + "//" + mp4_name, mp4_url,"-U","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36"])
+            print(sub1.returncode)
+            if sub1.returncode == 0 and os.path.getsize(temp_dir+"//"+mp4_name)>0:
+                break
+            if sub1.returncode ==8 :
+                print("资源有可能过期或者打不开了，请重新获取资源")
+                os.system("pause")
+            print("try:"+str(ki))
+        print("++++++++++++")
+        print(sub1.returncode)
+        if sub1.returncode == 0 and os.path.getsize(temp_dir+"//"+mp4_name)>0:
+            txt_data = "file \'"+mp4_name+"\'\n"
+            f_txt.write(txt_data)
+        print("++++++++++++")
+    f_txt.close()
+    # 合并ts文件为mp4文件
+    os.chdir(temp_dir)
+    subprocess.run(["ffmpeg", "-y","-f", "concat", "-safe","0","-i","list.txt","-c", "copy", output_name])
+    os.chdir(file_path)
+    print("完成："+output_name)
+    # 删除临时文件：
+    delete_temp = input("delete temp files intput(1) : ")
+    if delete_temp=="1":
+        print("delete_temp")
+        for f in os.listdir(temp_dir):
+            os.remove(os.path.join(temp_dir, f))
+        os.removedirs(temp_dir)
+
 def webm2mp3(name):
     cmd = "ffmpeg -i "+name+" -vn "+os.path.splitext(name)[0]+".mp3"
     subprocess.run(cmd)
@@ -211,6 +283,10 @@ if __name__ == '__main__':
         print("concat_ts")
         for url_path in url_paths:
             concat_ts(url_path,file_path)
+    if flag_media in ["cctv"]:
+        print("download cctv video:")
+        for url_path in url_paths:
+            download_cctv_v(url_path,file_path)
     if flag_replace_name:
         replace_name(file_path)
     print("处理完成")
