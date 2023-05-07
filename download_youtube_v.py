@@ -204,7 +204,7 @@ def download_cctv_v(url_main,file_path):
     os.chdir(file_path)
     file_path = os.getcwd()+"//"
     temp_dir = "temp"+ti    
-    output_name = os.getcwd()+"//" + input("save name:") +".mp4"
+    
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299"
     }
@@ -212,6 +212,11 @@ def download_cctv_v(url_main,file_path):
     url_txt = requests.get(url_main, headers=headers).text
     print("-------------url_json[video]key:---------------")
     url_json = json.loads(url_txt)
+    if "title" in url_json:
+        output_name = os.getcwd()+"//" + url_json["title"] +".mp4"
+    else:
+        output_name = os.getcwd()+"//" + input("save name:") +".mp4"
+    print("output_name:"+output_name)
     for key in url_json["video"]:
         print(key)
     chaptersn = "chapters"+input("which chapters[]:")
