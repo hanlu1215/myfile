@@ -4,6 +4,7 @@ import os
 import time
 import subprocess
 import requests
+import pathlib
 file_path = ".//data.a//"
 file_path = "I://gdg//"
 print("1:"+file_path)
@@ -109,6 +110,7 @@ def download_m3u8_2(url,file_path):
     file_path = os.getcwd()+"//"
     temp_dir = "temp"+ti
     mkdir(temp_dir)
+    pathlib.Path(temp_dir+"//.ignore").touch()
     output_name = os.getcwd()+"//" + ti +".mp4"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299"
