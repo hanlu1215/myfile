@@ -33,8 +33,23 @@ else:
 print("file_path: "+file_path)
 
 url_paths = []
-p1 = input("input url:")
-url_paths.append(p1)
+txt_url_falg = input("input url:")
+def url_from_txt(txt_path):
+    f = open(txt_path)
+    line = f.readline()
+    while line: 
+        line=line.strip('\n')
+        if line != "":
+            url_paths.append(line)
+        line = f.readline()
+    f.close()
+if txt_url_falg == "txt":
+    txt_path = ".//url.txt"
+    url_from_txt(txt_path)
+else:
+    url_paths.append(txt_url_falg)
+
+print(url_paths)
 flag_media = input("input file format: [mp3 flac video(v) m3u8(38) concat_ts(c) cctv] :")
 if input("flag_replace_name(1)  : ")=="1":
     flag_replace_name = True
@@ -94,16 +109,19 @@ def download_youtube_v(url_path,file_path):
     webm2mkv = ""
     cmd = "yt-dlp.exe "+url_path+webm2mkv+" -P "+file_path
     subprocess.run(cmd)
+    print("完成当前下载")
 
 def download_youtube_a(url_path,file_path,file_format):
     cmd = "yt-dlp.exe -f ba "+url_path+" -P "+file_path + file_format
     # os.system(cmd)
     subprocess.run(cmd)
+    print("完成当前下载")
     
 def download_m3u8(url_path,file_path):
     cmd = "ffmpeg -user_agent \"Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36\" -i "
     cmd += url_path+" -c copy "+file_path + str(time.time())+".mp4"
     subprocess.run(cmd)
+    print("完成当前下载")
 
 def download_m3u8_2(url,file_path):
     ti = str(time.time())
@@ -160,7 +178,10 @@ def download_m3u8_2(url,file_path):
     os.chdir(file_path)
     print("完成："+output_name)
     # 删除临时文件：
-    delete_temp = input("delete .ts files intput(1) : ")
+    if txt_url_falg == "txt":
+        delete_temp = "1"
+    else:
+        delete_temp = input("delete .ts files intput(1) : ")
     if delete_temp=="1":
         print("delete_temp")
         for f in os.listdir(temp_dir):
@@ -191,7 +212,8 @@ def concat_ts(url_path,file_path):
         # os.chdir(file_path)
         print("完成："+output_name)
         # 删除临时文件：
-        delete_temp = input("delete .ts files intput(1) : ")
+        # delete_temp = input("delete .ts files intput(1) : ")
+        delete_temp = "1"
         if delete_temp=="1":
             print("delete_temp")
             for f in os.listdir(temp_dir):
@@ -219,11 +241,10 @@ def download_cctv_v(url_main,file_path):
     print("output_name:"+output_name)
     for key in url_json["video"]:
         print(key)
-    chaptersn = "chapters"+input("which chapters[]:")
-    chaptersn_jsons = url_json["video"][chaptersn]
-    while chaptersn_jsons == []:
+    chaptersn = "chapters3"
+    while not chaptersn in url_json["video"]:
         chaptersn = "chapters"+input("which chapters[]:")
-        chaptersn_jsons = url_json["video"][chaptersn]
+    chaptersn_jsons = url_json["video"][chaptersn]
     urls = []
     for chaptersn_json in chaptersn_jsons:
         urls.append(chaptersn_json["url"])
@@ -263,7 +284,11 @@ def download_cctv_v(url_main,file_path):
     os.chdir(file_path)
     print("完成："+output_name)
     # 删除临时文件：
-    delete_temp = input("delete temp files intput(1) : ")
+    if txt_url_falg == "txt":
+        delete_temp = "1"
+    else:
+        delete_temp = input("delete .ts files intput(1) : ")
+
     if delete_temp=="1":
         print("delete_temp")
         for f in os.listdir(temp_dir):
